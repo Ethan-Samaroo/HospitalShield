@@ -1,11 +1,18 @@
 
 import streamlit as st
 
+
+
 from simulation import (
     hospital,
     assess_hospital_state,
     simulate_driver_shortage,
+    simulate_nurse_shortage,
+    simulate_emergency_kit_shortage,
+    simulate_low_generator_fuel,
 )
+
+
 from planning import build_contingency_plan
 from research import research_disruptions
 from decision import explain_plan
@@ -28,18 +35,31 @@ st.warning(
     "Recommendations require human review."
 )
 
+
+
 scenario_name = st.selectbox(
     "Choose a simulation scenario",
     [
         "Normal operations",
         "Driver shortage",
+        "Nurse shortage",
+        "Emergency kit shortage",
+        "Low generator fuel",
     ],
 )
 
 if scenario_name == "Driver shortage":
     scenario = simulate_driver_shortage(hospital)
+elif scenario_name == "Nurse shortage":
+    scenario = simulate_nurse_shortage(hospital)
+elif scenario_name == "Emergency kit shortage":
+    scenario = simulate_emergency_kit_shortage(hospital)
+elif scenario_name == "Low generator fuel":
+    scenario = simulate_low_generator_fuel(hospital)
 else:
     scenario = hospital
+
+
 
 st.subheader("Hospital resource status")
 

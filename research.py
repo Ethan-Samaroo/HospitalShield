@@ -140,13 +140,49 @@ def assess_evidence(finding: dict) -> dict:
         "bridge work",
         "delays expected",
         "mass delays",
+        "outage reported",
+        "hospital evacuated",
+        "hospital closure",
+        "emergency declared",
+        "supply shortage",
+        "staffing shortage",
+        "operations suspended",
+        "emergency response",
+        "service interruption",
     )
+
+    evidence_text = f"{title_text} {content_text}"
 
     has_disruption_terms = any(
-        phrase in title_text
+        phrase in evidence_text
         for phrase in disruption_phrases
     )
+    current_event_indicators = (
+        "today",
+        "currently",
+        "this morning",
+        "this afternoon",
+        "this evening",
+        "reported",
+        "announced",
+        "closed",
+        "suspended",
+        "evacuated",
+        "outage",
+        "disruption",
+        "shortage",
+    )
 
+    has_event_indicator = any(
+        phrase in evidence_text
+        for phrase in current_event_indicators
+    )
+
+    is_background_source = (
+        "wikipedia.org" in host
+        or "research.com" in host
+        or "preprints.org" in host
+    )
 
     today = datetime.now(timezone.utc).date()
     published = finding.get("published_date")
@@ -249,11 +285,11 @@ def assess_evidence(finding: dict) -> dict:
 
     # Only retain specific, potentially relevant reports with a
     # recent publication date or event dates that include today.
-    if is_generic:
+    if is_generic or is_background_source:
         disposition = "Exclude from disruption candidates"
-    elif not has_disruption_terms:
+    elif not has_disruption_terms or not has_event_indicator:
         disposition = "Low relevance"
-    elif recent_publication or current_event_date:
+    elif current_event_date or recent_publication:
         disposition = "Candidate for further verification"
     else:
         disposition = "Needs date verification"
@@ -393,29 +429,28 @@ def research_disruptions(query: str) -> list[dict]:
     
     searches = [
         {
-            "label": "Official transit sources",
+            "label": "Official healthcare and infrastructure sources",
             "query": (
-                "site:njtransit.com service disruptions "
-                "OR site:mta.info service alerts "
-                "New York October 2026"
+                f"{query} hospital healthcare infrastructure "
+                "official alerts New York"
             ),
         },
         {
-            "label": "Official weather alerts",
+            "label": "Official emergency and weather sources",
             "query": (
-                "site:weather.gov New York active weather warnings "
-                "October 11 2026"
+                f"{query} site:weather.gov OR site:nyc.gov "
+                "New York active alerts"
             ),
         },
         {
-            "label": "Broader transit news",
+            "label": "Broader disruption news",
             "query": (
-                "NJ Transit MTA confirmed service disruption "
-                "schedule changes New York October 2026"
+                f"{query} hospital operations supply chain "
+                "staffing power outage emergency preparedness "
+                "New York"
             ),
         },
     ]
-
 
     results = []
     seen_urls = set()
@@ -460,8 +495,6 @@ def research_disruptions(query: str) -> list[dict]:
 
             finding.update(assess_evidence(finding))
             results.append(finding)
-
-            results[-1].update(assess_evidence(results[-1]))
     
 
     
@@ -478,10 +511,8 @@ def research_disruptions(query: str) -> list[dict]:
     
     filtered_results = [
         finding for finding in results
-        if finding.get("disposition") in (
-            "Candidate for further verification",
-            "Needs date verification",
-        )
+        if finding.get("disposition")
+        == "Candidate for further verification"
     ]
 
     for finding in filtered_results:
@@ -495,8 +526,9 @@ def research_disruptions(query: str) -> list[dict]:
 
 if __name__ == "__main__":
     findings = research_disruptions(
-        "official active weather alerts and public transit disruptions "
-        "Long Island New York"
+        "recent hospital emergency preparedness disruptions "
+        "healthcare supply shortages hospital power outages "
+        "New York"
     )
 
     if not findings:

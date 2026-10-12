@@ -57,6 +57,38 @@ def simulate_driver_shortage(state: dict) -> dict:
 
     return simulated_state
 
+def simulate_nurse_shortage(state: dict) -> dict:
+    """Simulate a nurse staffing shortage."""
+    import copy
+
+    simulated_state = copy.deepcopy(state)
+    simulated_state["staff"]["nurses_available"] = max(
+        0, simulated_state["staff"]["nurses_required"] - 1
+    )
+    return simulated_state
+
+
+def simulate_emergency_kit_shortage(state: dict) -> dict:
+    """Simulate emergency kit supplies falling below minimum."""
+    import copy
+
+    simulated_state = copy.deepcopy(state)
+    simulated_state["supplies"]["emergency_kits"] = max(
+        0, simulated_state["supplies"]["minimum_emergency_kits"] - 1
+    )
+    return simulated_state
+
+
+def simulate_low_generator_fuel(state: dict) -> dict:
+    """Simulate backup generator fuel falling below minimum."""
+    import copy
+
+    simulated_state = copy.deepcopy(state)
+    simulated_state["supplies"]["backup_generator_fuel_hours"] = max(
+        0, simulated_state["supplies"]["minimum_fuel_hours"] - 1
+    )
+    return simulated_state
+
 if __name__ == "__main__":
     print(f"Hospital: {hospital['name']}")
     print("\nHospital assessment:")
