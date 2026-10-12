@@ -99,8 +99,35 @@ if st.button("Research and generate contingency plan", type="primary"):
 
             
 
+            
+# Only display official sources relevant to the local transit/weather search.
+            official_domains = (
+                "mta.info",
+                "njtransit.com",
+                "weather.gov",
+                "511ny.org",
+                )
+
+            def is_allowed_source(finding):
+                url = str(
+                finding.get("url") or finding.get("source_url") or ""
+            ).lower()
+
+                return any(
+                    domain in url
+                    for domain in official_domains
+                )
+
+            findings = [
+                finding for finding in findings
+                if is_allowed_source(finding)
+            ]
+
             for finding in findings:
-                finding["content"] = finding["content"][:400]
+                finding["content"] = str(
+                    finding.get("content", "")
+                )[:400]
+
 
         except Exception as error:
             st.error(f"Research failed: {error}")
@@ -109,10 +136,12 @@ if st.button("Research and generate contingency plan", type="primary"):
     st.subheader("Research findings")
 
     if not findings:
-        st.warning(
-            "No relevant disruption candidates were returned. "
-            "This does not prove that no disruptions exist."
-        )
+       st.info(
+           "No qualifying external disruption reports were found. "
+           "This does not mean that no disruptions exist. "
+           "Hospital risk assessment remains based on the "
+           "simulated resource data."
+       )
     else:
         for finding in findings:
             st.markdown(f"### {finding.get('title', 'Untitled')}")
